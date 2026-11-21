@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aconchego | Mapa de triagem</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#20332f;background:#f7f6f0}*{box-sizing:border-box}body{margin:0}header{background:#123f38;color:white;padding:18px 22px}header h1{margin:0;font-size:1.55rem}header p{margin:5px 0 0;color:#d4e7df;font-size:.92rem}.wrap{display:grid;grid-template-columns:minmax(275px,340px) 1fr;min-height:calc(100vh - 92px)}aside{padding:20px;background:#fff;border-right:1px solid #e2e7e3}h2{font-size:1.1rem;margin:0 0 10px}.muted{color:#64746f;font-size:.9rem;line-height:1.5}.notice{padding:12px;background:#eef5f1;border-radius:10px;margin:14px 0}.notice strong{display:block;margin-bottom:4px}#map{min-height:650px;background:#e6ebe7}.item{border:1px solid #dce5e0;border-radius:12px;padding:12px;margin-top:12px}.item h3{margin:0 0 6px;font-size:1rem}.item p{margin:0 0 8px;font-size:.85rem;color:#667}.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button{border:1px solid #bccbc4;background:#fff;border-radius:7px;padding:7px 9px;cursor:pointer}.actions button[aria-pressed="true"]{background:#184e42;color:white}.tiny{font-size:.78rem;color:#64746f}#status{margin-top:12px;color:#9d372e;font-size:.9rem}@media(max-width:750px){.wrap{display:flex;flex-direction:column}#map{min-height:55vh;order:-1}aside{border-right:0}}
+</style>
+</head>
+<body><header><h1>Aconchego <span style="font-weight:400">· Mapa de triagem</span></h1><p>Recife, Olinda e Jaboatão · Começando pelo entorno do Aeroporto do Recife</p></header>
+<div class="wrap"><aside><h2>Seleção de lugares</h2><p class="muted">Esta é a versão inicial. Os estabelecimentos serão adicionados após conferência de nome e localização. Não usamos endereços ou coordenadas inventados.</p><div class="notice"><strong>Primeira área: Aeroporto do Recife</strong><span class="tiny">Boa Viagem · Setúbal · Imbiribeira · Ipsep · Piedade · Prazeres</span></div><div id="places"><p class="muted">Nenhum estabelecimento cadastrado ainda. Assim que incluirmos locais verificados, aparecerão aqui com opções de triagem.</p></div><p class="tiny">As escolhas de triagem serão guardadas apenas neste navegador neste protótipo; não sincronizam entre dispositivos.</p><div id="status" role="status"></div></aside><div id="map" aria-label="Mapa interativo do Aconchego"></div></div>
+<script>
+// Substitua o array abaixo apenas por estabelecimentos com localização verificada.
+// Exemplo de estrutura: {id:'id-unico',nome:'Nome',endereco:'Endereço verificado',lat:-8.0,lng:-34.0,categoria:'Restaurante'}
+const lugares=[];
+let mapa;
+function iniciarMapa(){
+  mapa=new google.maps.Map(document.getElementById('map'),{center:{lat:-8.1264,lng:-34.9236},zoom:13,mapTypeControl:false,streetViewControl:false,fullscreenControl:true});
+  const lista=document.getElementById('places');
+  if(!lugares.length)return;
+  lista.innerHTML='';
+  const info=new google.maps.InfoWindow();
+  lugares.forEach(l=>{
+    if(!Number.isFinite(l.lat)||!Number.isFinite(l.lng))return;
+    const marcador=new google.maps.Marker({position:{lat:l.lat,lng:l.lng},map:mapa,title:l.nome});
+    marcador.addListener('click',()=>{const div=document.createElement('div');const titulo=document.createElement('strong');titulo.textContent=l.nome;div.append(titulo,document.createElement('br'),document.createTextNode(l.endereco||'Endereço não informado'));info.setContent(div);info.open(mapa,marcador)});
+    const item=document.createElement('section');item.className='item';const titulo=document.createElement('h3');titulo.textContent=l.nome;const endereco=document.createElement('p');endereco.textContent=l.endereco||'Endereço não informado';const botoes=document.createElement('div');botoes.className='actions';const key='aconchego-triagem-'+l.id;
+    ['Manter','Revisar','Excluir'].forEach(opcao=>{const b=document.createElement('button');b.type='button';b.textContent=opcao;const refresh=()=>b.setAttribute('aria-pressed',String(localStorage.getItem(key)===opcao));b.addEventListener('click',()=>{localStorage.setItem(key,opcao);botoes.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))});refresh();botoes.appendChild(b)});
+    item.append(titulo,endereco,botoes);lista.appendChild(item);
+  });
+}
+function erroMapa(){document.getElementById('status').textContent='Não foi possível carregar o Google Maps. Confira a chave, o faturamento e as restrições de domínio.'}
+window.iniciarMapa=iniciarMapa;window.erroMapa=erroMapa;
+</script>
+<!-- Substitua SUA_CHAVE_AQUI pela chave de navegador restrita ao domínio do GitHub Pages e à Maps JavaScript API. -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_AQUI&amp;callback=iniciarMapa" onerror="erroMapa()"></script>
+</body></html>
